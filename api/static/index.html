@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market ML Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f6f5f1;--panel:#ffffff;--ink:#16181d;--muted:#5d636f;--line:#e2e0d8;
+  --accent:#1f5eff;--accent-soft:#e6edff;--pos:#0f7b4f;--neg:#b42318;--warn:#a15c00;
+  --band:rgba(31,94,255,.14);--chip:#efeee8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e8e9ec;--muted:#9aa1ad;--line:#2a2f3a;
+  --accent:#7aa2ff;--accent-soft:#1c2540;--pos:#4cc38a;--neg:#ff7a6e;--warn:#f0b450;
+  --band:rgba(122,162,255,.18);--chip:#222733;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e8e9ec;--muted:#9aa1ad;--line:#2a2f3a;
+  --accent:#7aa2ff;--accent-soft:#1c2540;--pos:#4cc38a;--neg:#ff7a6e;--warn:#f0b450;
+  --band:rgba(122,162,255,.18);--chip:#222733;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+header{max-width:1180px;margin:0 auto;padding:28px 16px 0}
+header h1{margin:0;font-size:26px;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:var(--muted);max-width:760px}
+nav{max-width:1180px;margin:18px auto 0;padding:0 16px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 14px;font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+section[hidden]{display:none}
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+h2{font-size:19px;margin:28px 0 10px}
+.big{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums}
+.sub{color:var(--muted);font-size:13px}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.explain{background:var(--accent-soft);border-radius:10px;padding:14px 16px;font-size:14px}
+.explain b{font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 9px;font-size:12px}
+.chip.on{background:var(--accent);color:#fff}
+.bar{height:8px;background:var(--accent);border-radius:4px}
+.imp{display:grid;grid-template-columns:minmax(120px,190px) 1fr 44px;gap:8px;align-items:center;font-size:13px;margin:3px 0}
+.chart{position:relative;height:300px}
+select,input[type=range]{font:inherit}
+select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.slider{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--line)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:10px 0}
+.flow div{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+.flow div b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:3px}
+.err{color:var(--neg);font-size:14px}
+.scroll{overflow-x:auto}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Market ML Lab</h1>
+  <p>Dos modelos de machine learning en producción sobre Google Cloud: uno predice el VIX y la rentabilidad del SPY, y otro recomienda una cartera de ETFs. Ambos se entrenan, versionan y reentrenan automáticamente con MLflow.</p>
+</header>
+<nav role="tablist">
+  <button role="tab" data-tab="forecast" aria-selected="true">1 · VIX y SPY</button>
+  <button role="tab" data-tab="alloc" aria-selected="false">2 · Cartera de ETFs</button>
+  <button role="tab" data-tab="how" aria-selected="false">Cómo se usa el ML</button>
+  <button role="tab" data-tab="mlops" aria-selected="false">MLOps y registry</button>
+</nav>
+<main>
+
+<!-- ================= 1. FORECAST ================= -->
+<section id="forecast">
+  <div class="row"><div class="sub" id="fc-meta">Cargando…</div></div>
+  <div class="grid g3" id="fc-cards" style="margin-top:10px"></div>
+  <div class="explain" style="margin-top:14px">
+    <b>Cómo leer esto.</b> El número grande es la predicción central (la mediana). El rango es un <b>intervalo del 80 %</b>: lo calculan dos modelos aparte, de regresión cuantílica, entrenados para los percentiles 10 y 90. Para el VIX el modelo predice cuánto <b>cambiará</b> desde hoy; para el SPY, la rentabilidad acumulada en el horizonte.
+  </div>
+
+  <h2>¿Funciona? Predicción frente a realidad (fuera de muestra)</h2>
+  <div class="card">
+    <div class="row" style="margin-bottom:8px">
+      <select id="bt-target" aria-label="Objetivo">
+        <option value="vix_1d">VIX a 1 día</option><option value="vix_1w">VIX a 1 semana</option><option value="vix_1m" selected>VIX a 1 mes</option>
+        <option value="spy_1d">SPY a 1 día (%)</option><option value="spy_1w">SPY a 1 semana (%)</option><option value="spy_1m">SPY a 1 mes (%)</option>
+      </select>
+      <span class="sub">Cada punto se predijo con un modelo que <b>no había visto</b> ese periodo (validación walk-forward)</span>
+    </div>
+    <div class="chart"><canvas id="bt-chart"></canvas></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card scroll">
+      <h3>Métricas de validación frente al baseline</h3>
+      <table id="fc-metrics"></table>
+      <p class="sub" style="margin-top:8px"><b>Skill</b> = cuánto menos se equivoca el modelo que el baseline ingenuo (VIX: "no cambia"; SPY: "rentabilidad mediana histórica"). <b>Acierto dir.</b> = % de veces que acierta si sube o baja. <b>Cobertura</b> = % de veces que el valor real cayó dentro del intervalo del 80 %.</p>
+    </div>
+    <div class="card">
+      <div class="row"><h3>¿Qué variables usa el modelo?</h3>
+        <select id="imp-target" aria-label="Objetivo de importancia">
+          <option value="vix_1m">VIX 1 mes</option><option value="vix_1w">VIX 1 semana</option><option value="vix_1d">VIX 1 día</option>
+          <option value="spy_1m">SPY 1 mes</option><option value="spy_1w">SPY 1 semana</option><option value="spy_1d">SPY 1 día</option>
+        </select></div>
+      <div id="imp"></div>
+      <p class="sub">Importancia por permutación: cuánto empeora el error si se desordena esa variable.</p>
+    </div>
+  </div>
+
+  <h2>Simulador: ¿y si…?</h2>
+  <div class="card">
+    <p class="sub" style="margin-top:0">Cambia las condiciones de hoy y el mismo modelo recalcula las predicciones (<span class="mono">POST /api/forecast/scenario</span>).</p>
+    <div id="sliders"></div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="run-scn">Predecir escenario</button><button class="btn ghost" id="reset-scn">Volver a hoy</button></div>
+    <div class="grid g3" id="scn-cards" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- ================= 2. ALLOCATION ================= -->
+<section id="alloc" hidden>
+  <div class="sub" id="al-meta">Cargando…</div>
+  <div class="card" id="al-strategy" style="margin-top:10px"></div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card scroll">
+      <h3>Ranking de hoy y cartera publicada</h3>
+      <table id="al-table"></table>
+      <p class="sub" style="margin-top:8px"><b>Mom. 12-1</b> = rentabilidad de los últimos 12 meses sin contar el último. <b>P(acierto)</b> = probabilidad, según el clasificador, de que un candidato del momentum rinda por encima de la mediana el mes que viene. <b>Ranking ML</b> = puesto esperado (100 = el mejor).</p>
+      <p class="sub" id="al-signals"></p>
+    </div>
+    <div class="card">
+      <h3>Pesos de la cartera</h3>
+      <div class="chart" style="height:260px"><canvas id="al-weights"></canvas></div>
+      <p class="sub" id="al-method"></p>
+    </div>
+  </div>
+  <div class="explain" style="margin-top:14px">
+    <b>Cómo se usa el ML aquí.</b> Compiten cuatro estrategias, de la más simple a la más compleja: <b>equiponderada</b>, <b>momentum</b> (los 4 ETFs que más han subido en 12 meses), <b>momentum + ML</b> y <b>ranking ML</b>. En la de momentum + ML (meta-labeling), el momentum propone 6 candidatos y un clasificador estima la probabilidad de que cada uno sea un acierto y no un falso positivo; entre sus variables usa las predicciones del <b>modelo del VIX</b>. En cada reentrenamiento, una estrategia más compleja solo sustituye a la más simple si mejora su Sharpe en más de 0,05 en el backtest walk-forward.
+  </div>
+  <h2>Backtest walk-forward: las cuatro estrategias</h2>
+  <div class="grid g2">
+    <div class="card"><div class="chart"><canvas id="al-curve"></canvas></div></div>
+    <div class="card scroll"><h3>Resultados (rebalanceo mensual, top 4 equiponderado)</h3><table id="al-perf"></table>
+      <p class="sub" style="margin-top:8px">Sin costes de transacción. Sharpe con tipo libre de riesgo 0. ★ = estrategia en producción. <b>IC</b> = correlación de rangos entre el puesto predicho y el real.</p></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>¿El ranking ML ordena bien de forma estable? IC medio por año</h3>
+    <div class="chart" style="height:200px"><canvas id="al-ic"></canvas></div></div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="how" hidden>
+  <h2 style="margin-top:4px">Modelo 1: VIX y SPY a 1 día, 1 semana y 1 mes</h2>
+  <div class="flow">
+    <div><b>Datos</b>VIX y VIX3M directamente de <b>Cboe</b>, con FRED para la historia de 2007-2009 y como respaldo. SPY ajustado por dividendos de Yahoo Finance.</div>
+    <div><b>Variables</b>18 features: nivel y cambios del VIX, estructura temporal VIX/VIX3M, volatilidad realizada, prima de volatilidad, momentum y drawdown del SPY.</div>
+    <div><b>Objetivo</b>6 objetivos: log(VIX<sub>t+h</sub>/VIX<sub>t</sub>) y log(SPY<sub>t+h</sub>/SPY<sub>t</sub>) con h = 1, 5 y 21 días.</div>
+    <div><b>Modelo</b>18 modelos HistGradientBoosting: 6 objetivos × (mediana + percentil 10 + percentil 90).</div>
+    <div><b>Validación</b>Walk-forward con 5 cortes y un hueco de h días; comparación con un baseline ingenuo.</div>
+    <div><b>Servicio</b>Online: cada llamada a la API calcula las features de hoy y ejecuta el modelo.</div>
+  </div>
+  <div class="explain"><b>Lectura honesta.</b> El VIX es predecible en parte, porque tiende a volver a su media: tras un pico suele bajar, y en calma tiende a subir. Por eso el modelo del VIX bate al baseline, sobre todo a 1 mes. La rentabilidad del SPY es casi impredecible y el modelo apenas mejora a "la media histórica". Lo útil del modelo del SPY está en el <b>intervalo</b>, que se ensancha cuando el VIX está alto. Esto refleja cómo funcionan los mercados, no un fallo del proyecto.</div>
+
+  <h2>Modelo 2: cartera de 12 ETFs</h2>
+  <div class="flow">
+    <div><b>Datos</b>Precios de Yahoo Finance; contexto VIX de Cboe. 12 ETFs: acciones de EE. UU., internacionales y emergentes, bonos del Tesoro, corporativos y high yield, oro, materias primas y REITs.</div>
+    <div><b>Variables</b>Por ETF: momentum a 1, 3, 6 y 12-1 meses, volatilidad, drawdown, media de 200 días y rankings entre ETFs, más el contexto VIX.</div>
+    <div><b>Objetivo</b>Puesto (percentil 0-1) del ETF entre los 12 por rentabilidad a 21 días.</div>
+    <div><b>Modelo</b>Un HistGradientBoosting entrenado sobre el panel de todos los ETFs y días.</div>
+    <div><b>Meta-labeling</b>El momentum propone 6 candidatos; un clasificador, que usa también las predicciones del modelo del VIX, descarta los probables falsos positivos.</div>
+    <div><b>Filtro</b>Cuatro estrategias compiten en el backtest. Una más compleja solo sustituye a la simple si mejora su Sharpe en más de 0,05.</div>
+    <div><b>Servicio</b>Batch: el job diario guarda la cartera en GCS y la API la sirve.</div>
+  </div>
+
+  <h2>Arquitectura en Google Cloud</h2>
+  <div class="flow">
+    <div><b>Cloud Scheduler</b>Lunes a viernes a las 19:00 (hora de Nueva York), tras el cierre.</div>
+    <div><b>Cloud Function</b>Recibe la llamada autenticada (OIDC) y lanza el job.</div>
+    <div><b>Cloud Run Job</b>Descarga datos, entrena, registra en MLflow, aplica champion/challenger y genera la cartera.</div>
+    <div><b>Cloud Storage</b>Base de MLflow, artefactos, modelos y predicciones batch.</div>
+    <div><b>Cloud Run (API)</b>FastAPI + esta web. Carga el modelo con alias <span class="mono">@champion</span>.</div>
+    <div><b>Cloud Run (MLflow)</b>Interfaz de MLflow de solo lectura para ver runs y el registry.</div>
+  </div>
+</section>
+
+<!-- ================= MLOPS ================= -->
+<section id="mlops" hidden>
+  <div class="explain" style="margin-top:4px"><b>Champion/challenger.</b> Cada reentrenamiento registra una versión nueva con el alias <span class="mono">challenger</span>. Solo pasa a <span class="mono">champion</span>, que es la versión que usan la API y el job batch, si su métrica de validación no empeora la del campeón actual más allá de una tolerancia. Así un mal reentrenamiento nunca llega a producción.</div>
+  <p id="mlflow-link"></p>
+  <div id="registry"></div>
+  <h2>Prueba la API</h2>
+  <div class="card mono" style="font-size:13px;white-space:pre-wrap;overflow-x:auto" id="curl"></div>
+  <p class="sub">Documentación interactiva (Swagger): <a href="/docs">/docs</a></p>
+</section>
+</main>
+<footer>Proyecto educativo de MLOps. No es asesoramiento financiero.</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (v, d=2) => v == null ? '–' : Number(v).toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = (v, d=1) => v == null ? '–' : fmt(v*100, d) + ' %';
+const sign = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+const H = {"1d":"1 día","1w":"1 semana","1m":"1 mes"};
+const charts = {};
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  if(!r.ok){ let m = r.statusText; try{ m = (await r.json()).detail }catch(e){} throw new Error(m) }
+  return r.json();
+}
+function chart(id, cfg){ charts[id]?.destroy(); charts[id] = new Chart(document.getElementById(id), cfg) }
+Chart.defaults.font.family = '"IBM Plex Sans", system-ui, sans-serif';
+Chart.defaults.color = css('--muted');
+Chart.defaults.borderColor = css('--line');
+
+// ---- tabs
+const loaded = {};
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('main > section').forEach(s => s.hidden = s.id !== b.dataset.tab);
+  load(b.dataset.tab);
+});
+function load(tab){
+  if(loaded[tab]) return; loaded[tab] = true;
+  ({forecast: loadForecast, alloc: loadAlloc, mlops: loadMlops, how: () => {}})[tab]();
+}
+
+// ---- 1. forecast
+function cards(el, data){
+  el.innerHTML = data.forecast.map(h => {
+    const v = h.vix, s = h.spy_return_pct, dv = v.pred - data.current.vix;
+    return `<div class="card">
+      <h3>Dentro de ${H[h.horizon]}</h3>
+      <div class="row"><span class="sub">VIX</span><span class="sub">hoy ${fmt(data.current.vix)}</span></div>
+      <div class="big">${fmt(v.pred)} <span class="${sign(-dv)}" style="font-size:15px">${dv>=0?'+':''}${fmt(dv)}</span></div>
+      <div class="sub">80 %: ${fmt(v.p10)} – ${fmt(v.p90)}</div>
+      <div class="row" style="margin-top:12px"><span class="sub">Rentabilidad SPY</span></div>
+      <div class="big ${sign(s.pred)}">${s.pred>=0?'+':''}${fmt(s.pred)} %</div>
+      <div class="sub">80 %: ${fmt(s.p10)} % a ${fmt(s.p90)} %</div>
+    </div>`}).join('');
+}
+let today = null, explain = null;
+async function loadForecast(){
+  try{
+    [today, explain] = await Promise.all([api('/api/forecast'), api('/api/forecast/explain')]);
+  }catch(e){ $('#fc-meta').innerHTML = `<span class="err">${e.message}</span>`; return }
+  $('#fc-meta').innerHTML = `Datos al cierre del <b>${today.as_of}</b> · modelo <span class="mono">${today.model.name} v${today.model.version}</span> (alias champion), entrenado con datos hasta ${today.model.trained_until}`;
+  cards($('#fc-cards'), today);
+  const rows = Object.entries(explain.metrics).map(([t, m]) => {
+    const spy = t.startsWith('spy');
+    return `<tr><td>${t.startsWith('vix')?'VIX':'SPY'} · ${H[t.split('_')[1]]}</td>
+      <td class="${sign(m.skill)}">${pct(m.skill)}</td>
+      <td>${pct(m.hit_rate,0)}${spy?` <span class="sub">(base ${pct(m.hit_rate_baseline,0)})</span>`:''}</td>
+      <td>${pct(m.coverage_80,0)}</td></tr>`}).join('');
+  $('#fc-metrics').innerHTML = `<tr><th>Objetivo</th><th>Skill</th><th>Acierto dir.</th><th>Cobertura 80 %</th></tr>${rows}`;
+  drawImportance(); drawBacktest(); buildSliders();
+}
+function drawImportance(){
+  const imp = explain.importance[$('#imp-target').value];
+  const top = Object.entries(imp).slice(0, 8), max = top[0]?.[1] || 1;
+  $('#imp').innerHTML = top.map(([k, v]) => `<div class="imp" title="${explain.feature_info[k]||''}"><span class="mono">${k}</span><div><div class="bar" style="width:${v/max*100}%"></div></div><span class="sub">${pct(v,0)}</span></div>`).join('');
+}
+$('#imp-target').onchange = drawImportance;
+async function drawBacktest(){
+  const t = $('#bt-target').value, d = await api(`/api/forecast/backtest?target=${t}&last=250`);
+  const p = d.points, acc = css('--accent');
+  chart('bt-chart', {type:'line', data:{labels:p.map(x => x.date), datasets:[
+    {label:'p90', data:p.map(x => x.p90), borderWidth:0, pointRadius:0, fill:'+1', backgroundColor:css('--band')},
+    {label:'p10', data:p.map(x => x.p10), borderWidth:0, pointRadius:0, fill:false},
+    {label:'Real', data:p.map(x => x.actual), borderColor:css('--ink'), borderWidth:1.3, pointRadius:0},
+    {label:'Predicción (hecha h días antes)', data:p.map(x => x.pred), borderColor:acc, borderWidth:1.6, pointRadius:0},
+  ]}, options:{maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+    plugins:{legend:{labels:{filter:i => !i.text.startsWith('p')}}},
+    scales:{x:{ticks:{maxTicksLimit:8}}}}});
+}
+$('#bt-target').onchange = drawBacktest;
+
+const SL = [
+  ['vix', 'VIX', 9, 80, 0.5], ['term_structure', 'VIX / VIX3M', 0.7, 1.4, 0.01],
+  ['rv_21', 'Vol. realizada 21d', 4, 80, 0.5], ['spy_drawdown_252', 'Drawdown SPY', -0.5, 0, 0.01],
+];
+function buildSliders(){
+  $('#sliders').innerHTML = SL.map(([k, l, a, b, s]) => `<label class="slider"><span>${l}</span>
+    <input type="range" id="sl-${k}" min="${a}" max="${b}" step="${s}" value="${today.features[k]}">
+    <span class="mono" id="sv-${k}">${fmt(today.features[k])}</span></label>`).join('');
+  SL.forEach(([k]) => $(`#sl-${k}`).oninput = e => $(`#sv-${k}`).textContent = fmt(e.target.value));
+}
+$('#run-scn').onclick = async () => {
+  const overrides = Object.fromEntries(SL.map(([k]) => [k, +$(`#sl-${k}`).value]));
+  try{
+    const d = await api('/api/forecast/scenario', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({overrides})});
+    d.current.vix = overrides.vix; cards($('#scn-cards'), d);
+  }catch(e){ $('#scn-cards').innerHTML = `<span class="err">${e.message}</span>` }
+};
+$('#reset-scn').onclick = () => { buildSliders(); $('#scn-cards').innerHTML = '' };
+
+// ---- 2. allocation
+async function loadAlloc(){
+  let a, b;
+  try{ [a, b] = await Promise.all([api('/api/allocation'), api('/api/allocation/backtest')]) }
+  catch(e){ $('#al-meta').innerHTML = `<span class="err">${e.message}</span>`; return }
+  $('#al-meta').innerHTML = `Cartera calculada por el job batch con datos al <b>${a.as_of}</b> · <span class="mono">${a.model.name} v${a.model.version}</span>`;
+  const NAMES = {equal_weight:'Equiponderada', momentum:'Regla de momentum', meta:'Momentum + ML (meta-labeling)', ml:'Ranking ML'};
+  const usesML = a.strategy === 'ml' || a.strategy === 'meta';
+  $('#al-strategy').innerHTML = `<div class="row"><h3 style="margin:0">Estrategia en producción</h3>
+      <span class="chip ${usesML ? 'on' : ''}">${NAMES[a.strategy]}${usesML ? '' : ' · el ML no superó el filtro'}</span></div>
+    <p style="margin:8px 0 0">${a.reason}</p>`;
+  $('#al-method').textContent = `${a.strategy_description}. ${a.method}.`;
+  $('#al-table').innerHTML = `<tr><th>#</th><th>ETF</th><th>Clase</th><th>Mom. 12-1</th><th>P(acierto)</th><th>Ranking ML</th><th>Peso</th></tr>` +
+    a.allocations.map(r => `<tr><td>${r.rank}</td><td style="text-align:left"><b>${r.ticker}</b> <span class="sub">${r.name}</span></td>
+      <td><span class="chip">${r.asset_class}</span></td><td class="${sign(r.mom_12_1_pct)}">${fmt(r.mom_12_1_pct,1)} %</td>
+      <td>${r.meta_prob_pct == null ? '<span class="sub">no candidato</span>' : fmt(r.meta_prob_pct,0) + ' %'}</td><td>${fmt(r.ml_score,0)}</td>
+      <td>${r.weight ? `<span class="chip on">${pct(r.weight,0)}</span>` : '–'}</td></tr>`).join('');
+  const sg = a.vix_model_signals || {};
+  if(sg.vix_fc_1m != null) $('#al-signals').innerHTML = `Señales del modelo del VIX que usa el clasificador hoy: cambio previsto del VIX a 1 mes <b>${fmt((Math.exp(sg.vix_fc_1m)-1)*100,1)} %</b> · escenario alto del VIX <b>${fmt((Math.exp(sg.vix_fc_1m_p90)-1)*100,1)} %</b> · escenario malo del SPY <b>${fmt((Math.exp(sg.spy_fc_1m_p10)-1)*100,1)} %</b>`;
+  const w = a.allocations.filter(r => r.weight > 0);
+  const pal = [css('--accent'), css('--pos'), css('--warn'), css('--neg')];
+  chart('al-weights', {type:'doughnut', data:{labels:w.map(r => r.ticker), datasets:[{data:w.map(r => r.weight*100), backgroundColor:pal, borderColor:css('--panel')}]},
+    options:{maintainAspectRatio:false, plugins:{legend:{position:'right'}}}});
+  const c = b.curve;
+  chart('al-curve', {type:'line', data:{labels:c.map(x => x.date), datasets:[
+    {label:'Ranking ML', data:c.map(x => x.ml), borderColor:css('--accent'), borderWidth:1.6, pointRadius:0},
+    {label:'Momentum + ML', data:c.map(x => x.meta), borderColor:css('--warn'), borderWidth:2, pointRadius:0},
+    {label:'Momentum 12-1 (top 4)', data:c.map(x => x.momentum), borderColor:css('--pos'), borderWidth:2, pointRadius:0},
+    {label:'Equiponderada', data:c.map(x => x.equal_weight), borderColor:css('--muted'), borderWidth:1.3, pointRadius:0},
+    {label:'SPY', data:c.map(x => x.spy), borderColor:css('--ink'), borderWidth:1.3, pointRadius:0, borderDash:[4,3]},
+  ]}, options:{maintainAspectRatio:false, interaction:{mode:'index', intersect:false}, scales:{y:{type:'logarithmic'}, x:{ticks:{maxTicksLimit:8}}}}});
+  const m = b.metrics, S = [['equal_weight','Equipond.'],['momentum','Momentum'],['meta','Mom. + ML'],['ml','Ranking ML'],['spy','SPY']];
+  $('#al-perf').innerHTML = `<tr><th></th>${S.map(s => `<th>${s[1]}${s[0]===b.strategy?' ★':''}</th>`).join('')}</tr>` +
+    [['cagr','Rentab. anual'],['vol','Volatilidad'],['sharpe','Sharpe'],['max_drawdown','Máx. caída']].map(([k, l]) =>
+      `<tr><td>${l}</td>${S.map(([s]) => `<td>${k==='sharpe'?fmt(m[`${s}_${k}`]):pct(m[`${s}_${k}`])}</td>`).join('')}</tr>`).join('') +
+    `<tr><td>Aciertos de los elegidos</td><td></td><td>${pct(m.momentum_precision)}</td><td>${pct(m.meta_precision)}</td><td colspan="2"></td></tr>
+     <tr><td>Clasificador (AUC)</td><td colspan="5">${fmt(m.meta_auc,3)} <span class="sub">(0,5 = azar)</span></td></tr>
+     <tr><td>IC del ranking ML</td><td colspan="5">${fmt(m.ic_mean,3)} <span class="sub">(positivo en el ${pct(m.ic_years_positive,0)} de los años)</span></td></tr>`;
+  const icy = Object.entries(b.ic_by_year || {});
+  chart('al-ic', {type:'bar', data:{labels:icy.map(x => x[0]), datasets:[{label:'IC medio', data:icy.map(x => x[1]),
+    backgroundColor:icy.map(x => x[1] >= 0 ? css('--pos') : css('--neg'))}]},
+    options:{maintainAspectRatio:false, plugins:{legend:{display:false}}}});
+}
+
+// ---- mlops
+async function loadMlops(){
+  const base = location.origin;
+  $('#curl').textContent = `# Predicción de VIX y SPY (inferencia online)
+curl ${base}/api/forecast
+
+# Escenario: ¿qué pasa si el VIX sube a 35 en backwardation?
+curl -X POST ${base}/api/forecast/scenario \\
+  -H "content-type: application/json" \\
+  -d '{"overrides": {"vix": 35, "term_structure": 1.1}}'
+
+# Cartera recomendada (inferencia batch)
+curl ${base}/api/allocation`;
+  let d; try{ d = await api('/api/models') }catch(e){ $('#registry').innerHTML = `<span class="err">${e.message}</span>`; return }
+  if(d.mlflow_ui) $('#mlflow-link').innerHTML = `Interfaz de MLflow (runs, métricas, artefactos): <a href="${d.mlflow_ui}" target="_blank" rel="noopener">${d.mlflow_ui}</a>`;
+  $('#registry').innerHTML = d.models.map(m => `<h2>${m.name}</h2><div class="card scroll"><table>
+    <tr><th>Versión</th><th>Alias</th><th>Creada</th><th>${m.key_metric}</th>${m.name==='etf-allocator'?'<th>Estrategia</th>':''}<th style="text-align:left">Decisión</th></tr>
+    ${m.versions.map(v => `<tr><td>v${v.version}</td><td>${v.alias ? `<span class="chip ${v.alias==='champion'?'on':''}">${v.alias}</span>` : ''}</td>
+      <td>${v.created.slice(0,16).replace('T',' ')}</td><td>${fmt(v[m.key_metric],4)}</td>${m.name==='etf-allocator'?`<td>${v.strategy||'–'}</td>`:''}<td style="text-align:left" class="sub">${v.decision||''}</td></tr>`).join('')}
+  </table></div>`).join('');
+}
+load('forecast');
+</script>
+</body>
+</html>

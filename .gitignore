@@ -1,0 +1,7 @@
+.venv/
+.marketml/
+__pycache__/
+*.log
+.pytest_cache/
+deploy/.env
+.claude/

@@ -1,0 +1,10 @@
+# Lo que no se sube a Cloud Build
+.venv/
+.marketml/
+.git/
+**/__pycache__/
+*.log
+mlflow_server/
+functions/
+deploy/
+tests/
