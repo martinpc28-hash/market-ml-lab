@@ -99,7 +99,7 @@ Resultados de validación (fuera de muestra, 2007-2026, modelo campeón v3):
 | Estrategia (2011-2026, walk-forward) | Rentabilidad anual | Sharpe | Máx. caída |
 |---|---|---|---|
 | **Momentum 12-1** (en producción) | 11,3 % | **1,02** | -16,4 % |
-| Momentum + ML (meta-labeling con señales del VIX) | 10,4 % | 0,86 | -22,9 % |
+| Momentum + ML (meta-labeling con señales del VIX) | 10,2 % | 0,84 | -25,0 % |
 | Equiponderada | 7,8 % | 0,84 | -19,9 % |
 | Ranking ML | 9,9 % | 0,71 | -26,7 % |
 | SPY (referencia) | 15,5 % | 1,05 | -23,1 % |
@@ -110,7 +110,7 @@ Resultados de validación (fuera de muestra, 2007-2026, modelo campeón v3):
 2. **Objetivo corregido: predecir el puesto y no la rentabilidad.** El modelo pasa a ordenar: IC de 0,12, positivo en 14 de 16 años, y sus 4 favoritos baten a sus 4 últimos en un 6,7 % anual. Pero elige activos más volátiles y su Sharpe queda por debajo del momentum ([experiments/allocator_variants.py](experiments/allocator_variants.py)).
 3. **Meta-labeling: momentum + ML para filtrar falsos positivos.** Sin las señales del VIX, el clasificador apenas distingue (AUC de 0,545) y el Sharpe baja a 0,79-0,83 ([experiments/meta_labeling.py](experiments/meta_labeling.py)).
 4. **Uso del modelo del VIX en el de cartera** ([experiments/vix_into_allocation.py](experiments/vix_into_allocation.py)). Para no filtrar información futura, se usan las predicciones del modelo 1 hechas fuera de muestra.
-   - **Como variables del meta-labeling: ayuda.** El Sharpe sube a 0,86 y la precisión del 53,7 % al 55,1 %. No basta para batir al momentum.
+   - **Como variables del meta-labeling: ayuda un poco.** El Sharpe pasa de 0,79-0,83 a 0,84-0,86, según la ejecución, y la precisión del 53,7 % al 54,5-55,1 %. No basta para batir al momentum.
    - **Como freno de riesgo (pasarse a defensivo si el modelo prevé estrés): empeora todas las carteras.** El Sharpe del momentum baja de 0,94 a entre 0,57 y 0,84, según la variante. La razón es lo que sabe el modelo del VIX: que vuelve a su media. Cuando prevé estrés suele ser justo después de un pico, el momento en que las acciones rebotan, así que salir del mercado entonces sale caro. Por eso no se implementó.
 5. **Conclusión:** con estas variables, el ML no supera a una regla de momentum bien conocida, y el sistema lo detecta solo en cada reentrenamiento. Si algún día una estrategia con ML la supera por el margen exigido, pasará a producción automáticamente.
 
